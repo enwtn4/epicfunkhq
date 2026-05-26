@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Funk HQ - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --dark: #111111;
+            --card: #1a1a1a;
+            --border: #2a2a2a;
+            --gold: #c9a84c;
+            --gold-light: #e8c96e;
+            --red: #e74c3c;
+            --text: #f0f0f0;
+            --muted: #888;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--black);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .login-wrap {
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo-area {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .logo-text {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 52px;
+            color: var(--gold);
+            letter-spacing: 4px;
+            line-height: 1;
+        }
+        .logo-sub {
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 32px;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+        .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+        .form-input {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--black);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus { outline: none; border-color: var(--gold); }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--gold);
+            color: var(--black);
+            border: none;
+            border-radius: 7px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 18px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.15s;
+        }
+        .btn-submit:hover { background: var(--gold-light); }
+        .error-msg { color: var(--red); font-size: 13px; margin-top: 10px; text-align: center; min-height: 20px; }
+        .note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 16px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<div class="login-wrap">
+    <div class="logo-area">
+        <div class="logo-text">Epic Funk HQ</div>
+        <div class="logo-sub">Band Management Portal</div>
+    </div>
+    <div class="card">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Sign In</button>
+            <button class="tab" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="form-section active" id="tab-login">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="login-email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="login-password" placeholder="••••••••">
+            </div>
+            <button class="btn-submit" onclick="doLogin()">Sign In</button>
+            <div class="error-msg" id="login-error"></div>
+        </div>
+
+        <!-- REGISTER -->
+        <div class="form-section" id="tab-register">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="reg-name" placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Instrument</label>
+                <input type="text" class="form-input" id="reg-instrument" placeholder="Trumpet, Trombone, Drums...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="reg-email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="reg-password" placeholder="Choose a password">
+            </div>
+            <button class="btn-submit" onclick="doRegister()">Create Account</button>
+            <div class="error-msg" id="reg-error"></div>
+            <div class="note">First person to register becomes the admin.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
+        document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+        document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    }
+
+    async function doLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const err = document.getElementById('login-error');
+        err.textContent = '';
+        if (!email || !password) { err.textContent = 'Please fill in all fields.'; return; }
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password})
+        });
+        const data = await res.json();
+        if (res.ok) { window.location = '/dashboard'; }
+        else { err.textContent = data.error || 'Login failed.'; }
+    }
+
+    async function doRegister() {
+        const name = document.getElementById('reg-name').value.trim();
+        const instrument = document.getElementById('reg-instrument').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const err = document.getElementById('reg-error');
+        err.textContent = '';
+        if (!name || !email || !password) { err.textContent = 'Please fill in all required fields.'; return; }
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, instrument, email, password})
+        });
+        const data = await res.json();
+        if (res.ok) { window.location = '/dashboard'; }
+        else { err.textContent = data.error || 'Registration failed.'; }
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const active = document.querySelector('.form-section.active').id;
+            if (active === 'tab-login') doLogin();
+            else doRegister();
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Members - Epic Funk HQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Members</div>
+</div>
+
+<div class="page-content">
+    <div class="card" style="padding:0;overflow:hidden;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Instrument</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    {% if user.is_admin %}<th>Actions</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ member.name }}</div>
+                        <div style="font-size:11px;color:var(--muted);">Since {{ member.created_at.strftime('%b %Y') }}</div>
+                    </td>
+                    <td style="color:var(--muted);">{{ member.instrument or '-' }}</td>
+                    <td style="color:var(--muted);font-size:13px;">{{ member.email }}</td>
+                    <td>
+                        {% if member.is_admin %}
+                        <span class="badge badge-admin">Admin</span>
+                        {% else %}
+                        <span class="badge badge-pending">Member</span>
+                        {% endif %}
+                    </td>
+                    {% if user.is_admin %}
+                    <td>
+                        {% if member.id != user.id %}
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-outline btn-sm" onclick="toggleAdmin({{ member.id }}, '{{ member.name|e }}')">
+                                {% if member.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteMember({{ member.id }}, '{{ member.name|e }}')">Remove</button>
+                        </div>
+                        {% else %}
+                        <span style="font-size:12px;color:var(--muted);">You</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:16px;padding:16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;">
+        <div style="font-size:13px;color:var(--muted);">
+            Share your app URL with band members and have them register at the login page. First person to register is automatically the admin.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function toggleAdmin(id, name) {
+        if (!confirm(`Change admin status for ${name}?`)) return;
+        const res = await fetch('/api/members/' + id + '/admin', { method: 'POST' });
+        if (res.ok) { showToast('Role updated'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed', 'error'); }
+    }
+
+    async function deleteMember(id, name) {
+        if (!confirm(`Remove ${name} from Epic Funk HQ? They will lose all access.`)) return;
+        const res = await fetch('/api/members/' + id, { method: 'DELETE' });
+        if (res.ok) { showToast('Member removed'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed', 'error'); }
+    }
+</script>
+{% endblock %}

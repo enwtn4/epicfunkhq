@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Epic Funk HQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Dashboard</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px;">Welcome back, {{ user.name }}</div>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Stats Row -->
+    <div class="grid-3" style="margin-bottom:24px;">
+        <div class="stat-card">
+            <div class="stat-number">{{ member_count }}</div>
+            <div class="stat-label">Band Members</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ song_count }}</div>
+            <div class="stat-label">Songs in Library</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ upcoming_gigs|length }}</div>
+            <div class="stat-label">Upcoming Gigs</div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <!-- Upcoming Gigs -->
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <div class="card-title" style="margin-bottom:0;">Upcoming Gigs</div>
+                <a href="/gigs" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            {% if upcoming_gigs %}
+                {% for gig in upcoming_gigs %}
+                <div style="padding:12px 0;border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                    <div style="font-weight:600;font-size:14px;">{{ gig.title }}</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+                        {{ gig.date.strftime('%A, %B %d') }} &bull; {{ gig.venue or 'Venue TBD' }}
+                    </div>
+                    {% if gig.call_time %}
+                    <div style="font-size:12px;color:var(--gold);margin-top:2px;">Call time: {{ gig.call_time }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="icon">🎺</div>
+                    <p>No upcoming gigs yet</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Announcements -->
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <div class="card-title" style="margin-bottom:0;">Announcements</div>
+                <a href="/announcements" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            {% if announcements %}
+                {% for ann in announcements %}
+                <div style="padding:12px 0;border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;{% endif %}">
+                    {% if ann.pinned %}<div style="font-size:11px;color:var(--gold);margin-bottom:2px;">📌 PINNED</div>{% endif %}
+                    <div style="font-weight:600;font-size:14px;">{{ ann.title }}</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5;">{{ ann.body[:100] }}{% if ann.body|length > 100 %}...{% endif %}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px;">{{ ann.created_at.strftime('%b %d') }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="icon">📢</div>
+                    <p>No announcements yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

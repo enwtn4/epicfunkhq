@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Epic Funk HQ{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --dark: #111111;
+            --card: #1a1a1a;
+            --border: #2a2a2a;
+            --gold: #c9a84c;
+            --gold-light: #e8c96e;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --yellow: #f39c12;
+            --text: #f0f0f0;
+            --muted: #888;
+            --sidebar-width: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--black);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--dark);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo .brand {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 28px;
+            color: var(--gold);
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .sidebar-logo .sub {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+        }
+
+        .nav-section {
+            padding: 8px 20px 4px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .nav-link.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.07); }
+
+        .nav-link .icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-user .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .sidebar-user .user-role {
+            font-size: 11px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .logout-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.15s;
+        }
+
+        .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+        /* MAIN */
+        .main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            padding: 32px 32px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 36px;
+            letter-spacing: 2px;
+            color: var(--text);
+        }
+
+        .page-content {
+            padding: 24px 32px 40px;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .card-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 18px;
+            letter-spacing: 1px;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+
+        /* GRID */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+        /* STATS */
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 48px;
+            color: var(--gold);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 9px 18px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-gold { background: var(--gold); color: var(--black); }
+        .btn-gold:hover { background: var(--gold-light); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-danger:hover { border-color: var(--red); color: var(--red); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* FORMS */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--black);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+        .form-input:focus { outline: none; border-color: var(--gold); }
+        textarea.form-input { resize: vertical; min-height: 80px; }
+        select.form-input { cursor: pointer; }
+
+        /* TABLE */
+        .table { width: 100%; border-collapse: collapse; }
+        .table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+        .table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 14px;
+        }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-yes { background: rgba(46,204,113,0.15); color: var(--green); }
+        .badge-no { background: rgba(231,76,60,0.15); color: var(--red); }
+        .badge-maybe { background: rgba(243,156,18,0.15); color: var(--yellow); }
+        .badge-pending { background: rgba(255,255,255,0.07); color: var(--muted); }
+        .badge-admin { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            letter-spacing: 1px;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 13px;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--green); color: var(--green); }
+        .toast.error { border-color: var(--red); color: var(--red); }
+
+        /* RSVP BUTTONS */
+        .rsvp-group { display: flex; gap: 6px; }
+        .rsvp-btn {
+            padding: 5px 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .rsvp-btn:hover { border-color: currentColor; }
+        .rsvp-btn.yes { color: var(--green); border-color: var(--green); background: rgba(46,204,113,0.1); }
+        .rsvp-btn.no { color: var(--red); border-color: var(--red); background: rgba(231,76,60,0.1); }
+        .rsvp-btn.maybe { color: var(--yellow); border-color: var(--yellow); background: rgba(243,156,18,0.1); }
+
+        /* ANNOUNCEMENT */
+        .announcement-item {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .announcement-item:last-child { border-bottom: none; }
+        .ann-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .ann-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+        .ann-meta { font-size: 11px; color: var(--muted); margin-top: 8px; }
+        .ann-pinned { color: var(--gold); font-size: 12px; margin-bottom: 4px; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; }
+
+        /* MOBILE */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: var(--dark);
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            padding: 0 16px;
+            z-index: 200;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; padding-top: 56px; }
+            .mobile-header { display: flex; }
+            .page-header { padding: 20px 16px 0; }
+            .page-content { padding: 16px 16px 40px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .page-title { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Mobile Header -->
+<div class="mobile-header">
+    <button onclick="toggleSidebar()" style="background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;">☰</button>
+    <span style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);letter-spacing:2px;">EPIC FUNK HQ</span>
+    <span></span>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="brand">Epic Funk HQ</div>
+        <div class="sub">Band Management</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <a href="/dashboard" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <span class="icon">🏠</span> Dashboard
+        </a>
+        <a href="/gigs" class="nav-link {% if request.endpoint == 'gigs' %}active{% endif %}">
+            <span class="icon">🎺</span> Gigs
+        </a>
+        <a href="/songs" class="nav-link {% if request.endpoint == 'songs' %}active{% endif %}">
+            <span class="icon">🎵</span> Song Library
+        </a>
+        <a href="/announcements" class="nav-link {% if request.endpoint == 'announcements' %}active{% endif %}">
+            <span class="icon">📢</span> Announcements
+        </a>
+        <a href="/members" class="nav-link {% if request.endpoint == 'members' %}active{% endif %}">
+            <span class="icon">👥</span> Members
+        </a>
+    </nav>
+    <div class="sidebar-user">
+        <div class="user-name" id="sidebar-user-name">Loading...</div>
+        <div class="user-role" id="sidebar-user-role"></div>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // Load user info
+    fetch('/api/me').then(r => r.json()).then(u => {
+        document.getElementById('sidebar-user-name').textContent = u.name || '';
+        document.getElementById('sidebar-user-role').textContent = u.is_admin ? 'Admin' : 'Member';
+    }).catch(() => {});
+
+    function showToast(msg, type='success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + type;
+        setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    function logout() {
+        fetch('/api/logout', {method:'POST'}).then(() => { window.location = '/login'; });
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    document.addEventListener('click', e => {
+        const sidebar = document.getElementById('sidebar');
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !e.target.closest('.mobile-header')) {
+            sidebar.classList.remove('open');
+        }
+    });
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

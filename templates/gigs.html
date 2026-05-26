@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Gigs - Epic Funk HQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Gigs</div>
+    {% if user.is_admin %}
+    <button class="btn btn-gold" onclick="openModal('modal-add-gig')">+ Add Gig</button>
+    {% endif %}
+</div>
+
+<div class="page-content">
+    {% if gig_data %}
+        {% for item in gig_data %}
+        {% set gig = item.gig %}
+        {% set is_past = gig.date < now %}
+        <div class="card" style="margin-bottom:16px;{% if is_past %}opacity:0.6;{% endif %}">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div style="flex:1;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                        <div style="font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:1px;">{{ gig.title }}</div>
+                        {% if is_past %}<span class="badge badge-pending">Past</span>{% endif %}
+                    </div>
+                    <div style="font-size:14px;color:var(--gold);margin-bottom:8px;">
+                        {{ gig.date.strftime('%A, %B %d, %Y') }}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:16px;">
+                        {% if gig.venue %}
+                        <div style="font-size:13px;color:var(--muted);">📍 {{ gig.venue }}</div>
+                        {% endif %}
+                        {% if gig.call_time %}
+                        <div style="font-size:13px;color:var(--muted);">⏰ Call: {{ gig.call_time }}</div>
+                        {% endif %}
+                        {% if gig.load_in %}
+                        <div style="font-size:13px;color:var(--muted);">🚛 Load-in: {{ gig.load_in }}</div>
+                        {% endif %}
+                        {% if gig.pay %}
+                        <div style="font-size:13px;color:var(--muted);">💰 {{ gig.pay }}</div>
+                        {% endif %}
+                    </div>
+                    {% if gig.notes %}
+                    <div style="font-size:13px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">{{ gig.notes }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- RSVP -->
+                <div style="min-width:180px;">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;">Your RSVP</div>
+                    <div class="rsvp-group" id="rsvp-{{ gig.id }}">
+                        <button class="rsvp-btn {% if item.my_rsvp == 'yes' %}yes{% endif %}" onclick="rsvp({{ gig.id }}, 'yes')">Yes</button>
+                        <button class="rsvp-btn {% if item.my_rsvp == 'no' %}no{% endif %}" onclick="rsvp({{ gig.id }}, 'no')">No</button>
+                        <button class="rsvp-btn {% if item.my_rsvp == 'maybe' %}maybe{% endif %}" onclick="rsvp({{ gig.id }}, 'maybe')">Maybe</button>
+                    </div>
+                    {% if user.is_admin %}
+                    <div style="margin-top:10px;font-size:12px;color:var(--muted);">
+                        <span style="color:var(--green);">{{ item.yes }} yes</span> &bull;
+                        <span style="color:var(--red);">{{ item.no }} no</span> &bull;
+                        <span style="color:var(--yellow);">{{ item.maybe }} maybe</span>
+                    </div>
+                    <div style="margin-top:8px;display:flex;gap:6px;">
+                        <button class="btn btn-outline btn-sm" onclick="viewRSVPs({{ gig.id }}, '{{ gig.title|e }}')">See All RSVPs</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteGig({{ gig.id }})">Delete</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="icon">🎺</div>
+                <p>No gigs scheduled yet{% if user.is_admin %} — add your first one{% endif %}</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if user.is_admin %}
+<!-- Add Gig Modal -->
+<div class="modal-overlay" id="modal-add-gig">
+    <div class="modal">
+        <div class="modal-title">Add Gig</div>
+        <div class="form-group">
+            <label class="form-label">Gig Name *</label>
+            <input type="text" class="form-input" id="new-gig-title" placeholder="e.g. Hal and Mal's Saturday Night">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Venue</label>
+            <input type="text" class="form-input" id="new-gig-venue" placeholder="Venue name, Jackson MS">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input type="datetime-local" class="form-input" id="new-gig-date">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+                <label class="form-label">Call Time</label>
+                <input type="text" class="form-input" id="new-gig-call" placeholder="e.g. 7:00 PM">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Load-In</label>
+                <input type="text" class="form-input" id="new-gig-loadin" placeholder="e.g. 5:30 PM">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Pay</label>
+            <input type="text" class="form-input" id="new-gig-pay" placeholder="e.g. $150/person">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="new-gig-notes" placeholder="Dress code, parking, set length..."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-add-gig')">Cancel</button>
+            <button class="btn btn-gold" onclick="addGig()">Add Gig</button>
+        </div>
+    </div>
+</div>
+
+<!-- RSVP List Modal -->
+<div class="modal-overlay" id="modal-rsvps">
+    <div class="modal">
+        <div class="modal-title" id="rsvp-modal-title">RSVP List</div>
+        <div id="rsvp-list-content" style="min-height:80px;"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-rsvps')">Close</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    async function rsvp(gigId, status) {
+        const res = await fetch('/api/gigs/' + gigId + '/rsvp', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status})
+        });
+        if (res.ok) {
+            const group = document.getElementById('rsvp-' + gigId);
+            group.querySelectorAll('.rsvp-btn').forEach(btn => btn.classList.remove('yes','no','maybe'));
+            group.querySelector(`[onclick*="'${status}'"]`).classList.add(status);
+            showToast('RSVP updated');
+        }
+    }
+
+    async function addGig() {
+        const title = document.getElementById('new-gig-title').value.trim();
+        const date = document.getElementById('new-gig-date').value;
+        if (!title || !date) { showToast('Title and date are required', 'error'); return; }
+        const res = await fetch('/api/gigs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title,
+                venue: document.getElementById('new-gig-venue').value.trim(),
+                date,
+                call_time: document.getElementById('new-gig-call').value.trim(),
+                load_in: document.getElementById('new-gig-loadin').value.trim(),
+                pay: document.getElementById('new-gig-pay').value.trim(),
+                notes: document.getElementById('new-gig-notes').value.trim()
+            })
+        });
+        if (res.ok) { showToast('Gig added'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed to add gig', 'error'); }
+    }
+
+    async function deleteGig(id) {
+        if (!confirm('Delete this gig? All RSVPs will be removed.')) return;
+        const res = await fetch('/api/gigs/' + id, { method: 'DELETE' });
+        if (res.ok) { showToast('Gig deleted'); setTimeout(() => location.reload(), 800); }
+    }
+
+    async function viewRSVPs(gigId, title) {
+        document.getElementById('rsvp-modal-title').textContent = title + ' - RSVPs';
+        document.getElementById('rsvp-list-content').innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+        openModal('modal-rsvps');
+        const res = await fetch('/api/gigs/' + gigId + '/rsvps');
+        const data = await res.json();
+        if (!data.length) {
+            document.getElementById('rsvp-list-content').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No RSVPs yet.</div>';
+            return;
+        }
+        const html = data.map(r => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                <div>
+                    <div style="font-size:14px;font-weight:600;">${r.name}</div>
+                    <div style="font-size:12px;color:var(--muted);">${r.instrument || 'No instrument listed'}</div>
+                </div>
+                <span class="badge badge-${r.status}">${r.status}</span>
+            </div>
+        `).join('');
+        document.getElementById('rsvp-list-content').innerHTML = html;
+    }
+</script>
+{% endblock %}

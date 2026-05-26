@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Song Library - Epic Funk HQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Song Library</div>
+    {% if user.is_admin %}
+    <button class="btn btn-gold" onclick="openModal('modal-add-song')">+ Add Song</button>
+    {% endif %}
+</div>
+
+<div class="page-content">
+    <!-- Search -->
+    <div style="margin-bottom:20px;">
+        <input type="text" class="form-input" id="song-search" placeholder="Search songs, artists, keys..." oninput="filterSongs()" style="max-width:360px;">
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+        {% if songs %}
+        <table class="table" id="song-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Key</th>
+                    <th>Tempo</th>
+                    <th>Feel</th>
+                    {% if user.is_admin %}<th></th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for song in songs %}
+                <tr class="song-row">
+                    <td><strong>{{ song.title }}</strong></td>
+                    <td style="color:var(--muted);">{{ song.artist or '-' }}</td>
+                    <td>{% if song.key %}<span class="badge badge-maybe">{{ song.key }}</span>{% else %}-{% endif %}</td>
+                    <td style="color:var(--muted);">{% if song.tempo %}{{ song.tempo }} BPM{% else %}-{% endif %}</td>
+                    <td style="color:var(--muted);">{{ song.feel or '-' }}</td>
+                    {% if user.is_admin %}
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-outline btn-sm" onclick="editSong({{ song.id }}, '{{ song.title|e }}', '{{ song.artist|e }}', '{{ song.key|e }}', {{ song.tempo or 'null' }}, '{{ song.feel|e }}', '{{ song.notes|e }}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSong({{ song.id }})">Delete</button>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🎵</div>
+            <p>No songs in the library yet{% if user.is_admin %} — add your first one{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if user.is_admin %}
+<!-- Add Song Modal -->
+<div class="modal-overlay" id="modal-add-song">
+    <div class="modal">
+        <div class="modal-title">Add Song</div>
+        <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" class="form-input" id="new-title" placeholder="Song title">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Artist</label>
+            <input type="text" class="form-input" id="new-artist" placeholder="Original artist">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+                <label class="form-label">Key</label>
+                <input type="text" class="form-input" id="new-key" placeholder="e.g. Bb, F minor">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tempo (BPM)</label>
+                <input type="number" class="form-input" id="new-tempo" placeholder="120">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feel / Genre</label>
+            <input type="text" class="form-input" id="new-feel" placeholder="Funk, Ballad, Second Line...">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="new-notes" placeholder="Arrangement notes, cues, etc."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-add-song')">Cancel</button>
+            <button class="btn btn-gold" onclick="addSong()">Add Song</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Song Modal -->
+<div class="modal-overlay" id="modal-edit-song">
+    <div class="modal">
+        <div class="modal-title">Edit Song</div>
+        <input type="hidden" id="edit-song-id">
+        <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" class="form-input" id="edit-title">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Artist</label>
+            <input type="text" class="form-input" id="edit-artist">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+                <label class="form-label">Key</label>
+                <input type="text" class="form-input" id="edit-key">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tempo (BPM)</label>
+                <input type="number" class="form-input" id="edit-tempo">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feel / Genre</label>
+            <input type="text" class="form-input" id="edit-feel">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="edit-notes"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-edit-song')">Cancel</button>
+            <button class="btn btn-gold" onclick="saveSong()">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    function filterSongs() {
+        const q = document.getElementById('song-search').value.toLowerCase();
+        document.querySelectorAll('.song-row').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    async function addSong() {
+        const title = document.getElementById('new-title').value.trim();
+        if (!title) { showToast('Song title is required', 'error'); return; }
+        const res = await fetch('/api/songs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title,
+                artist: document.getElementById('new-artist').value.trim(),
+                key: document.getElementById('new-key').value.trim(),
+                tempo: parseInt(document.getElementById('new-tempo').value) || null,
+                feel: document.getElementById('new-feel').value.trim(),
+                notes: document.getElementById('new-notes').value.trim()
+            })
+        });
+        if (res.ok) { showToast('Song added'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed to add song', 'error'); }
+    }
+
+    function editSong(id, title, artist, key, tempo, feel, notes) {
+        document.getElementById('edit-song-id').value = id;
+        document.getElementById('edit-title').value = title;
+        document.getElementById('edit-artist').value = artist;
+        document.getElementById('edit-key').value = key;
+        document.getElementById('edit-tempo').value = tempo || '';
+        document.getElementById('edit-feel').value = feel;
+        document.getElementById('edit-notes').value = notes;
+        openModal('modal-edit-song');
+    }
+
+    async function saveSong() {
+        const id = document.getElementById('edit-song-id').value;
+        const res = await fetch('/api/songs/' + id, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: document.getElementById('edit-title').value.trim(),
+                artist: document.getElementById('edit-artist').value.trim(),
+                key: document.getElementById('edit-key').value.trim(),
+                tempo: parseInt(document.getElementById('edit-tempo').value) || null,
+                feel: document.getElementById('edit-feel').value.trim(),
+                notes: document.getElementById('edit-notes').value.trim()
+            })
+        });
+        if (res.ok) { showToast('Song updated'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed to update', 'error'); }
+    }
+
+    async function deleteSong(id) {
+        if (!confirm('Delete this song from the library?')) return;
+        const res = await fetch('/api/songs/' + id, { method: 'DELETE' });
+        if (res.ok) { showToast('Song removed'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed to delete', 'error'); }
+    }
+</script>
+{% endblock %}

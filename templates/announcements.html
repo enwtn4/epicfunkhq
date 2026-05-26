@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Announcements - Epic Funk HQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Announcements</div>
+    {% if user.is_admin %}
+    <button class="btn btn-gold" onclick="openModal('modal-add-ann')">+ Post Announcement</button>
+    {% endif %}
+</div>
+
+<div class="page-content">
+    {% if announcements %}
+        {% for ann in announcements %}
+        <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div style="flex:1;">
+                    {% if ann.pinned %}
+                    <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📌 Pinned</div>
+                    {% endif %}
+                    <div style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1px;margin-bottom:8px;">{{ ann.title }}</div>
+                    <div style="font-size:14px;color:var(--muted);line-height:1.7;white-space:pre-wrap;">{{ ann.body }}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:12px;">
+                        Posted by {{ ann.author.name if ann.author else 'Admin' }} &bull; {{ ann.created_at.strftime('%B %d, %Y') }}
+                    </div>
+                </div>
+                {% if user.is_admin %}
+                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                    <button class="btn btn-outline btn-sm" onclick="togglePin({{ ann.id }})">
+                        {% if ann.pinned %}Unpin{% else %}Pin{% endif %}
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAnn({{ ann.id }})">Delete</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="icon">📢</div>
+                <p>No announcements yet</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if user.is_admin %}
+<div class="modal-overlay" id="modal-add-ann">
+    <div class="modal">
+        <div class="modal-title">Post Announcement</div>
+        <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" class="form-input" id="ann-title" placeholder="Announcement title">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Message *</label>
+            <textarea class="form-input" id="ann-body" placeholder="What does the band need to know?" style="min-height:120px;"></textarea>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="ann-pinned" style="width:16px;height:16px;accent-color:var(--gold);">
+            <label for="ann-pinned" style="font-size:13px;cursor:pointer;">Pin this announcement to the top</label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-add-ann')">Cancel</button>
+            <button class="btn btn-gold" onclick="addAnn()">Post</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    async function addAnn() {
+        const title = document.getElementById('ann-title').value.trim();
+        const body = document.getElementById('ann-body').value.trim();
+        if (!title || !body) { showToast('Title and message required', 'error'); return; }
+        const res = await fetch('/api/announcements', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title, body, pinned: document.getElementById('ann-pinned').checked })
+        });
+        if (res.ok) { showToast('Announcement posted'); setTimeout(() => location.reload(), 800); }
+        else { showToast('Failed to post', 'error'); }
+    }
+
+    async function togglePin(id) {
+        const res = await fetch('/api/announcements/' + id + '/pin', { method: 'POST' });
+        if (res.ok) { location.reload(); }
+    }
+
+    async function deleteAnn(id) {
+        if (!confirm('Delete this announcement?')) return;
+        const res = await fetch('/api/announcements/' + id, { method: 'DELETE' });
+        if (res.ok) { showToast('Deleted'); setTimeout(() => location.reload(), 800); }
+    }
+</script>
+{% endblock %}
