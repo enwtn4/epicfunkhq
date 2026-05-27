@@ -41,6 +41,22 @@
                     {% if gig.notes %}
                     <div style="font-size:13px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">{{ gig.notes }}</div>
                     {% endif %}
+
+                    <!-- WHO IS IN - visible to everyone -->
+                    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                        <button class="btn btn-outline btn-sm" onclick="toggleRSVPList({{ gig.id }})">
+                            👥 <span id="rsvp-summary-{{ gig.id }}">
+                                <span style="color:var(--green);">{{ item.yes }} in</span> &bull;
+                                <span style="color:var(--red);">{{ item.no }} out</span> &bull;
+                                <span style="color:var(--yellow);">{{ item.maybe }} maybe</span>
+                            </span>
+                        </button>
+                        <div id="rsvp-list-{{ gig.id }}" style="display:none;margin-top:12px;">
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;" id="rsvp-grid-{{ gig.id }}">
+                                <div style="color:var(--muted);font-size:13px;">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- RSVP -->
@@ -52,14 +68,8 @@
                         <button class="rsvp-btn {% if item.my_rsvp == 'maybe' %}maybe{% endif %}" onclick="rsvp({{ gig.id }}, 'maybe')">Maybe</button>
                     </div>
                     {% if user.is_admin %}
-                    <div style="margin-top:10px;font-size:12px;color:var(--muted);">
-                        <span style="color:var(--green);">{{ item.yes }} yes</span> &bull;
-                        <span style="color:var(--red);">{{ item.no }} no</span> &bull;
-                        <span style="color:var(--yellow);">{{ item.maybe }} maybe</span>
-                    </div>
-                    <div style="margin-top:8px;display:flex;gap:6px;">
-                        <button class="btn btn-outline btn-sm" onclick="viewRSVPs({{ gig.id }}, '{{ gig.title|e }}')">See All RSVPs</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteGig({{ gig.id }})">Delete</button>
+                    <div style="margin-top:10px;display:flex;gap:6px;">
+                        <button class="btn btn-danger btn-sm" onclick="deleteGig({{ gig.id }})">Delete Gig</button>
                     </div>
                     {% endif %}
                 </div>
@@ -117,17 +127,6 @@
         </div>
     </div>
 </div>
-
-<!-- RSVP List Modal -->
-<div class="modal-overlay" id="modal-rsvps">
-    <div class="modal">
-        <div class="modal-title" id="rsvp-modal-title">RSVP List</div>
-        <div id="rsvp-list-content" style="min-height:80px;"></div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal('modal-rsvps')">Close</button>
-        </div>
-    </div>
-</div>
 {% endif %}
 
 {% endblock %}
@@ -140,6 +139,60 @@
         m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
     });
 
+    const rsvpCache = {};
+
+    async function toggleRSVPList(gigId) {
+        const list = document.getElementById('rsvp-list-' + gigId);
+        const grid = document.getElementById('rsvp-grid-' + gigId);
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (!rsvpCache[gigId]) {
+                const res = await fetch('/api/gigs/' + gigId + '/rsvps/all');
+                rsvpCache[gigId] = await res.json();
+            }
+            const data = rsvpCache[gigId];
+            if (!data.length) {
+                grid.innerHTML = '<div style="color:var(--muted);font-size:13px;">No responses yet.</div>';
+                return;
+            }
+            const yes = data.filter(r => r.status === 'yes');
+            const no = data.filter(r => r.status === 'no');
+            const maybe = data.filter(r => r.status === 'maybe');
+
+            let html = '';
+            if (yes.length) {
+                html += '<div style="grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:4px;">Available</div>';
+                yes.forEach(r => {
+                    html += `<div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:13px;font-weight:600;">${r.name}</div>
+                        <div style="font-size:11px;color:var(--muted);">${r.instrument || ''}</div>
+                    </div>`;
+                });
+            }
+            if (no.length) {
+                html += '<div style="grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-top:8px;margin-bottom:4px;">Not Available</div>';
+                no.forEach(r => {
+                    html += `<div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:13px;font-weight:600;">${r.name}</div>
+                        <div style="font-size:11px;color:var(--muted);">${r.instrument || ''}</div>
+                    </div>`;
+                });
+            }
+            if (maybe.length) {
+                html += '<div style="grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--yellow);margin-top:8px;margin-bottom:4px;">Maybe</div>';
+                maybe.forEach(r => {
+                    html += `<div style="background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.2);border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:13px;font-weight:600;">${r.name}</div>
+                        <div style="font-size:11px;color:var(--muted);">${r.instrument || ''}</div>
+                    </div>`;
+                });
+            }
+            grid.innerHTML = html;
+        } else {
+            list.style.display = 'none';
+        }
+    }
+
     async function rsvp(gigId, status) {
         const res = await fetch('/api/gigs/' + gigId + '/rsvp', {
             method: 'POST',
@@ -150,6 +203,7 @@
             const group = document.getElementById('rsvp-' + gigId);
             group.querySelectorAll('.rsvp-btn').forEach(btn => btn.classList.remove('yes','no','maybe'));
             group.querySelector(`[onclick*="'${status}'"]`).classList.add(status);
+            rsvpCache[gigId] = null; // clear cache so it reloads
             showToast('RSVP updated');
         }
     }
@@ -179,28 +233,6 @@
         if (!confirm('Delete this gig? All RSVPs will be removed.')) return;
         const res = await fetch('/api/gigs/' + id, { method: 'DELETE' });
         if (res.ok) { showToast('Gig deleted'); setTimeout(() => location.reload(), 800); }
-    }
-
-    async function viewRSVPs(gigId, title) {
-        document.getElementById('rsvp-modal-title').textContent = title + ' - RSVPs';
-        document.getElementById('rsvp-list-content').innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading...</div>';
-        openModal('modal-rsvps');
-        const res = await fetch('/api/gigs/' + gigId + '/rsvps');
-        const data = await res.json();
-        if (!data.length) {
-            document.getElementById('rsvp-list-content').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No RSVPs yet.</div>';
-            return;
-        }
-        const html = data.map(r => `
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
-                <div>
-                    <div style="font-size:14px;font-weight:600;">${r.name}</div>
-                    <div style="font-size:12px;color:var(--muted);">${r.instrument || 'No instrument listed'}</div>
-                </div>
-                <span class="badge badge-${r.status}">${r.status}</span>
-            </div>
-        `).join('');
-        document.getElementById('rsvp-list-content').innerHTML = html;
     }
 </script>
 {% endblock %}
