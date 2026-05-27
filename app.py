@@ -257,6 +257,12 @@ def get_rsvps(gig_id):
     rsvps = RSVP.query.filter_by(gig_id=gig_id).all()
     return jsonify([{'name': r.member.name, 'instrument': r.member.instrument, 'status': r.status} for r in rsvps])
 
+@app.route('/api/gigs/<int:gig_id>/rsvps/all')
+@login_required
+def get_rsvps_all(gig_id):
+    rsvps = RSVP.query.filter_by(gig_id=gig_id).all()
+    return jsonify([{'name': r.member.name, 'instrument': r.member.instrument, 'status': r.status} for r in rsvps])
+
 @app.route('/api/announcements', methods=['POST'])
 @admin_required
 def add_announcement():
